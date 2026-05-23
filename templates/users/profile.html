@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ user.display_name }}'s Profile{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background:var(--tn-mist);">
+  <div class="container" style="max-width:900px;">
+
+    <!-- Profile header card -->
+    <div class="profile-header mb-4">
+      <div class="d-flex align-items-start gap-4 flex-wrap">
+        <div class="profile-avatar-wrap">
+          {% if user.avatar %}
+            <img src="{{ user.avatar.url }}" alt="{{ user.username }}" style="width:100%;height:100%;object-fit:cover;" />
+          {% else %}
+            <i class="bi bi-person-fill"></i>
+          {% endif %}
+        </div>
+        <div class="flex-grow-1">
+          <h2 style="font-family:var(--ff-display);font-size:1.9rem;margin-bottom:0.25rem;">{{ user.display_name }}</h2>
+          <p style="color:rgba(255,255,255,0.65);font-size:0.9rem;margin-bottom:0.75rem;">@{{ user.username }} · Member since {{ user.date_joined|date:"F Y" }}</p>
+          {% if user.bio %}
+            <p style="color:rgba(255,255,255,0.8);font-size:0.93rem;max-width:480px;">{{ user.bio }}</p>
+          {% endif %}
+          <div class="d-flex gap-2 flex-wrap mt-3">
+            <span class="stat-pill"><i class="bi bi-heart-fill me-1" style="color:var(--tn-amber);"></i>{{ favorites_count }} Favorites</span>
+            <span class="stat-pill"><i class="bi bi-chat-dots me-1" style="color:var(--tn-amber);"></i>{{ chat_count }} AI Chats</span>
+          </div>
+        </div>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+          <a href="{% url 'users:profile-edit' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-pencil me-1"></i>Edit Profile
+          </a>
+          <a href="{% url 'chatbot:chat' %}" class="btn btn-accent btn-sm">
+            <i class="bi bi-robot me-1"></i>AI Guide
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Favorite places -->
+    <div class="detail-info-card mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 style="font-family:var(--ff-display);margin:0;">
+          <i class="bi bi-heart-fill me-2" style="color:#e63946;"></i>Saved Places
+        </h5>
+        <a href="{% url 'places:list' %}" class="btn btn-sm btn-outline-secondary">Browse All</a>
+      </div>
+
+      {% if favorites %}
+      <div class="row g-3">
+        {% for place in favorites %}
+        <div class="col-sm-6 col-md-4">
+          <a href="{{ place.get_absolute_url }}" class="text-decoration-none">
+            <div class="place-card">
+              <div class="card-img-wrap" style="height:140px;">
+                <img src="{{ place.image_url }}" alt="{{ place.name }}" />
+                <span class="category-badge">{{ place.get_category_display }}</span>
+              </div>
+              <div class="card-body py-2">
+                <h6 class="card-title mb-1" style="font-size:0.9rem;">{{ place.name }}</h6>
+                <p class="card-location mb-0" style="font-size:0.78rem;"><i class="bi bi-geo-alt-fill"></i>{{ place.location }}</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state py-3">
+        <span class="empty-icon" style="font-size:2.5rem;">💛</span>
+        <p class="text-muted mb-2">No saved places yet.</p>
+        <a href="{% url 'places:list' %}" class="btn btn-sm btn-outline-success">Explore Places</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Account info -->
+    <div class="detail-info-card">
+      <h5 style="font-family:var(--ff-display);margin-bottom:1.2rem;">Account Information</h5>
+      <div class="row g-3">
+        <div class="col-sm-6">
+          <label class="form-label text-muted small fw-600" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.07em;">Email</label>
+          <p class="mb-0">{{ user.email }}</p>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label text-muted small fw-600" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.07em;">Username</label>
+          <p class="mb-0">{{ user.username }}</p>
+        </div>
+        <div class="col-sm-6">
+          <label class="form-label text-muted small fw-600" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.07em;">Member Since</label>
+          <p class="mb-0">{{ user.date_joined|date:"F j, Y" }}</p>
+        </div>
+        <div class="col-12">
+          <a href="{% url 'users:profile-edit' %}" class="btn btn-sm" style="background:var(--tn-pine);color:#fff;">
+            <i class="bi bi-pencil me-1"></i>Edit Profile
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

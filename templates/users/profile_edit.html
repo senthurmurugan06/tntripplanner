@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<section class="py-5" style="background:var(--tn-mist);">
+  <div class="container" style="max-width:640px;">
+
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back
+      </a>
+      <div>
+        <div class="section-eyebrow">Account</div>
+        <h2 class="section-title mb-0">Edit Profile</h2>
+      </div>
+    </div>
+
+    <div class="detail-info-card">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <!-- Avatar preview -->
+        {% if user.avatar %}
+        <div class="mb-4 text-center">
+          <img src="{{ user.avatar.url }}" alt="Avatar" class="rounded-circle mb-2" width="80" height="80" style="object-fit:cover;border:3px solid var(--tn-border);" />
+          <p class="text-muted small mb-0">Current avatar</p>
+        </div>
+        {% endif %}
+
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label fw-500 small">First Name</label>
+            {{ form.first_name }}
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label fw-500 small">Last Name</label>
+            {{ form.last_name }}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-500 small">Email Address</label>
+            {{ form.email }}
+            {% if form.email.errors %}
+              <div class="invalid-feedback d-block">{{ form.email.errors.0 }}</div>
+            {% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-500 small">Bio <span class="text-muted">(optional)</span></label>
+            {{ form.bio }}
+            <div class="form-text">Max 500 characters. Tell other travelers about yourself.</div>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-500 small">Avatar Photo <span class="text-muted">(optional)</span></label>
+            {{ form.avatar }}
+            <div class="form-text">JPG or PNG. Recommended: 200×200px.</div>
+          </div>
+        </div>
+
+        <hr class="divider-fancy" />
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-search px-4">
+            <i class="bi bi-check-lg me-1"></i>Save Changes
+          </button>
+          <a href="{% url 'users:profile' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</section>
+{% endblock %}

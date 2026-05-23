@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="{% block meta_description %}Discover Tamil Nadu's best tourist destinations with TNTripPlanner{% endblock %}" />
+  <title>{% block title %}TNTripPlanner{% endblock %} | Tamil Nadu's Best</title>
+
+  <!-- Preconnect for performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Google Fonts: Playfair Display + DM Sans -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <!-- Custom CSS -->
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/main.css' %}" />
+
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- ── NAVBAR ──────────────────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg navbar-dark tn-navbar sticky-top">
+  <div class="container">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'places:list' %}">
+      <span class="brand-icon">🏔️</span>
+      <span class="brand-text">TNTrip<span class="brand-accent">Planner</span></span>
+    </a>
+
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse"
+            data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto ms-3 gap-1">
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.app_name == 'places' %}active{% endif %}"
+             href="{% url 'places:list' %}">
+            <i class="bi bi-map me-1"></i>Explore
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.resolver_match.app_name == 'chatbot' %}active{% endif %}"
+             href="{% url 'chatbot:chat' %}">
+            <i class="bi bi-chat-dots me-1"></i>AI Guide
+          </a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav gap-1 align-items-center">
+        {% if user.is_authenticated %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-2"
+               href="#" data-bs-toggle="dropdown">
+              {% if user.avatar %}
+                <img src="{{ user.avatar.url }}" class="rounded-circle" width="28" height="28" alt="avatar" />
+              {% else %}
+                <span class="avatar-placeholder"><i class="bi bi-person-circle"></i></span>
+              {% endif %}
+              <span class="d-none d-md-inline">{{ user.username }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end shadow-lg">
+              <li><h6 class="dropdown-header">{{ user.display_name }}</h6></li>
+              <li><a class="dropdown-item" href="{% url 'users:profile' %}"><i class="bi bi-person me-2"></i>Profile</a></li>
+              <li><a class="dropdown-item" href="{% url 'users:profile-edit' %}"><i class="bi bi-pencil me-2"></i>Edit Profile</a></li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <form method="post" action="{% url 'users:logout' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="dropdown-item text-danger">
+                    <i class="bi bi-box-arrow-right me-2"></i>Sign Out
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'users:login' %}">Sign In</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-accent btn-sm ms-2" href="{% url 'users:register' %}">Get Started</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- ── MESSAGES ────────────────────────────────────────────────────────── -->
+{% if messages %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1100;">
+  {% for message in messages %}
+  <div class="toast show align-items-center text-bg-{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %} border-0"
+       role="alert" data-bs-autohide="true" data-bs-delay="4000">
+    <div class="d-flex">
+      <div class="toast-body">{{ message }}</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── MAIN CONTENT ────────────────────────────────────────────────────── -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ── FOOTER ──────────────────────────────────────────────────────────── -->
+<footer class="tn-footer mt-auto">
+  <div class="container">
+    <div class="row g-4 py-5">
+      <div class="col-lg-4">
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="fs-4">🏔️</span>
+          <span class="footer-brand">TNTripPlanner</span>
+        </div>
+        <p class="text-muted small">Your AI-powered guide to discovering Tamil Nadu's hidden gems, iconic landmarks, and unforgettable experiences.</p>
+      </div>
+      <div class="col-lg-2">
+        <h6 class="footer-heading">Explore</h6>
+        <ul class="list-unstyled footer-links">
+          <li><a href="{% url 'places:list' %}">All Places</a></li>
+          <li><a href="{% url 'places:list' %}?category=nature">Nature</a></li>
+          <li><a href="{% url 'places:list' %}?category=history">History</a></li>
+          <li><a href="{% url 'places:list' %}?category=food">Food</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-2">
+        <h6 class="footer-heading">Account</h6>
+        <ul class="list-unstyled footer-links">
+          {% if user.is_authenticated %}
+            <li><a href="{% url 'users:profile' %}">My Profile</a></li>
+            <li><a href="{% url 'chatbot:chat' %}">AI Guide</a></li>
+          {% else %}
+            <li><a href="{% url 'users:register' %}">Sign Up</a></li>
+            <li><a href="{% url 'users:login' %}">Sign In</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6 class="footer-heading">Tamil Nadu Highlights</h6>
+        <p class="small text-white">Chennai · Madurai · Thanjavur · Kodaikanal · Rameswaram</p>
+        <div class="mt-3 d-flex gap-3">
+          <span class="small text-white">Made with ❤️ for Tamil Nadu travelers</span>
+        </div>
+      </div>
+    </div>
+    <hr class="footer-divider" />
+    <div class="row py-3">
+      <div class="col text-center">
+        <span class="text-muted small">© 2025 TNTripPlanner · Built with Django</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ── SCRIPTS ──────────────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Auto-initialise toasts
+  document.querySelectorAll('.toast').forEach(el => {
+    const toast = new bootstrap.Toast(el);
+    toast.show();
+  });
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

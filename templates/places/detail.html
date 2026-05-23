@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}{{ place.name }}{% endblock %}
+{% block meta_description %}{{ place.short_description|default:place.description|truncatechars:155 }}{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO IMAGE ─────────────────────────────────────────── -->
+<div class="detail-hero">
+  <img src="{{ place.image_url }}" alt="{{ place.image_alt|default:place.name }}" />
+  <div class="detail-hero-overlay"></div>
+  <div class="detail-hero-content">
+    <div class="container">
+      <nav aria-label="breadcrumb" class="mb-2">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="{% url 'places:list' %}" class="text-white-50">Explore</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'places:list' %}?category={{ place.category }}" class="text-white-50">{{ place.get_category_display }}</a></li>
+          <li class="breadcrumb-item active text-white">{{ place.name }}</li>
+        </ol>
+      </nav>
+
+      <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+        <div>
+          <span class="badge bg-amber text-dark mb-2" style="background:var(--tn-amber);color:var(--tn-forest)!important;">
+            {{ place.get_category_display }}
+          </span>
+          <h1 class="text-white mb-1" style="font-family:var(--ff-display);font-size:clamp(1.8rem,4vw,3rem);">{{ place.name }}</h1>
+          <p class="text-white-75 mb-0 fs-5">
+            <i class="bi bi-geo-alt-fill me-1"></i>{{ place.location }}, {{ place.state }}
+          </p>
+        </div>
+
+        {% if user.is_authenticated %}
+        <button class="btn btn-lg {% if is_favorited %}btn-danger{% else %}btn-outline-light{% endif %} fav-toggle-btn"
+                id="favBtn"
+                data-slug="{{ place.slug }}"
+                data-csrf="{{ csrf_token }}">
+          <i class="bi bi-heart{% if is_favorited %}-fill{% endif %} me-2"></i>
+          <span id="favLabel">{% if is_favorited %}Saved{% else %}Save{% endif %}</span>
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DETAIL BODY ────────────────────────────────────────── -->
+<section class="py-5">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Main content -->
+      <div class="col-lg-8">
+        <!-- Rating row -->
+        <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+          <div class="d-flex align-items-center gap-1">
+            {% for i in place.star_range %}
+              {% if i <= place.rating %}
+                <i class="bi bi-star-fill text-warning fs-5"></i>
+              {% else %}
+                <i class="bi bi-star text-muted fs-5"></i>
+              {% endif %}
+            {% endfor %}
+          </div>
+          <span class="fw-bold fs-5">{{ place.rating }}/5</span>
+          <span class="text-muted">({{ place.rating_count|intcomma }} review{{ place.rating_count|pluralize }})</span>
+          {% if place.is_featured %}
+            <span class="badge" style="background:var(--tn-amber);color:var(--tn-forest);">
+              <i class="bi bi-star-fill me-1"></i>Featured
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Description -->
+        <div class="detail-info-card mb-4">
+          <h3 class="mb-3" style="font-family:var(--ff-display);font-size:1.3rem;">About This Place</h3>
+          <p class="text-muted" style="line-height:1.8;">{{ place.description }}</p>
+        </div>
+
+        <!-- Details grid -->
+        <div class="row g-3 mb-4">
+          {% if place.address %}
+          <div class="col-sm-6">
+            <div class="detail-info-card h-100">
+              <div class="d-flex align-items-start gap-3">
+                <div style="width:40px;height:40px;background:var(--tn-mist);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-map-fill" style="color:var(--tn-pine);"></i>
+                </div>
+                <div>
+                  <small class="text-muted fw-600 text-uppercase" style="font-size:0.72rem;letter-spacing:0.07em;">Address</small>
+                  <p class="mb-0 small">{{ place.address }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="col-sm-6">
+            <div class="detail-info-card h-100">
+              <div class="d-flex align-items-start gap-3">
+                <div style="width:40px;height:40px;background:var(--tn-mist);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-ticket-fill" style="color:var(--tn-pine);"></i>
+                </div>
+                <div>
+                  <small class="text-muted fw-600 text-uppercase" style="font-size:0.72rem;letter-spacing:0.07em;">Admission</small>
+                  <p class="mb-0 small fw-bold {% if place.is_free %}text-success{% endif %}">
+                    {% if place.is_free %}Free Entry{% else %}${{ place.entry_fee }} per person{% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% if place.phone %}
+          <div class="col-sm-6">
+            <div class="detail-info-card h-100">
+              <div class="d-flex align-items-start gap-3">
+                <div style="width:40px;height:40px;background:var(--tn-mist);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-telephone-fill" style="color:var(--tn-pine);"></i>
+                </div>
+                <div>
+                  <small class="text-muted fw-600 text-uppercase" style="font-size:0.72rem;letter-spacing:0.07em;">Phone</small>
+                  <p class="mb-0 small"><a href="tel:{{ place.phone }}">{{ place.phone }}</a></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          {% if place.website %}
+          <div class="col-sm-6">
+            <div class="detail-info-card h-100">
+              <div class="d-flex align-items-start gap-3">
+                <div style="width:40px;height:40px;background:var(--tn-mist);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                  <i class="bi bi-globe2" style="color:var(--tn-pine);"></i>
+                </div>
+                <div>
+                  <small class="text-muted fw-600 text-uppercase" style="font-size:0.72rem;letter-spacing:0.07em;">Website</small>
+                  <p class="mb-0 small"><a href="{{ place.website }}" target="_blank" rel="noopener">Visit website ↗</a></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="col-lg-4">
+        <!-- AI Guide CTA -->
+        <div class="detail-info-card mb-4" style="background:linear-gradient(135deg,var(--tn-forest),var(--tn-pine));color:#fff;border:none;">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span style="font-size:2rem;">🤖</span>
+            <div>
+              <h6 class="mb-0" style="font-family:var(--ff-display);">Ask TNTripBot</h6>
+              <small style="color:rgba(255,255,255,0.7);">Get AI-powered travel tips</small>
+            </div>
+          </div>
+          <p style="font-size:0.88rem;color:rgba(255,255,255,0.8);">Want insider tips about {{ place.name }}? Ask our AI travel guide!</p>
+          <a href="{% url 'chatbot:chat' %}" class="btn btn-accent btn-sm w-100">
+            Chat with AI Guide <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+        </div>
+
+        <!-- Related places -->
+        {% if related %}
+        <div class="detail-info-card">
+          <h6 class="mb-3" style="font-family:var(--ff-display);color:var(--tn-text);">
+            <i class="bi bi-grid me-2" style="color:var(--tn-sage);"></i>Similar Places
+          </h6>
+          {% for rp in related %}
+          <a href="{{ rp.get_absolute_url }}" class="d-flex align-items-center gap-3 mb-3 text-decoration-none" style="color:inherit;">
+            <div style="width:60px;height:50px;border-radius:8px;overflow:hidden;flex-shrink:0;">
+              <img src="{{ rp.image_url }}" alt="{{ rp.name }}" style="width:100%;height:100%;object-fit:cover;" />
+            </div>
+            <div>
+              <p class="mb-0 fw-600 small">{{ rp.name }}</p>
+              <p class="mb-0 small text-muted"><i class="bi bi-geo-alt me-1"></i>{{ rp.location }}</p>
+              <div style="font-size:0.72rem;color:var(--tn-amber);">
+                {% for i in rp.star_range %}{% if i <= rp.rating %}★{% endif %}{% endfor %}
+              </div>
+            </div>
+          </a>
+          {% if not forloop.last %}<hr class="my-2 border-tn" />{% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const favBtn = document.getElementById('favBtn');
+if (favBtn) {
+  favBtn.addEventListener('click', async () => {
+    const slug = favBtn.dataset.slug;
+    const csrf = favBtn.dataset.csrf;
+    favBtn.disabled = true;
+
+    try {
+      const res = await fetch(`/places/${slug}/favorite/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      const label = document.getElementById('favLabel');
+      const icon = favBtn.querySelector('i');
+      if (data.added) {
+        icon.className = 'bi bi-heart-fill me-2';
+        label.textContent = 'Saved';
+        favBtn.classList.replace('btn-outline-light', 'btn-danger');
+      } else {
+        icon.className = 'bi bi-heart me-2';
+        label.textContent = 'Save';
+        favBtn.classList.replace('btn-danger', 'btn-outline-light');
+      }
+    } catch(e) {
+      console.error(e);
+    } finally {
+      favBtn.disabled = false;
+    }
+  });
+}
+</script>
+{% endblock %}

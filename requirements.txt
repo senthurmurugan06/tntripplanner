@@ -1,0 +1,25 @@
+# ─── Core ─────────────────────────────────────────────────
+Django>=5.0,<5.1
+Pillow>=10.3.0
+
+# ─── Environment management ───────────────────────────────
+python-decouple>=3.8
+
+# ─── Database (PostgreSQL) ────────────────────────────────
+psycopg2-binary>=2.9.9      # Use psycopg2 (without -binary) in production
+
+# ─── OpenAI ───────────────────────────────────────────────
+# openai>=1.30.0
+
+# ─── Cohere AI ────────────────────────────────────────────────
+cohere>=5.0.0
+
+# ─── Production server ────────────────────────────────────
+gunicorn>=22.0.0
+
+# ─── Static files (production) ────────────────────────────
+whitenoise>=6.7.0
+
+# ─── Dev/test only ────────────────────────────────────────
+# coverage>=7.5.0
+# factory-boy>=3.3.0

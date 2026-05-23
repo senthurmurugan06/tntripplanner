@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Travel Assistant - Tamil Nadu Guide{% endblock %}
+
+{% block content %}
+<section class="py-4" style="background: linear-gradient(135deg, var(--tn-mist) 0%, #f0f4f2 100%); min-height: calc(100vh - 70px);">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-12 col-xl-10">
+        <div class="row g-4">
+          <!-- Left Sidebar -->
+          <div class="col-lg-3">
+            <div class="sidebar p-4 mb-4">
+              <h5 class="mb-4 text-center">
+                <i class="bi bi-compass me-2"></i>Quick Navigation
+              </h5>
+              <div class="mb-4">
+                <label for="placeDropdown" class="form-label fw-semibold text-tn-forest">Select a Place</label>
+                <select id="placeDropdown" class="form-select">
+                  <option value="">Choose a destination...</option>
+                  {% for place in places %}
+                  <option value="{{ place.name }}">{{ place.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <h6 class="mb-3">
+                <i class="bi bi-question-circle me-1"></i>Quick Questions
+              </h6>
+              <div class="d-grid gap-2">
+                <button class="btn btn-outline-primary" id="howToReachBtn">
+                  <i class="bi bi-geo-alt me-2"></i>How to reach?
+                </button>
+                <button class="btn btn-outline-primary" id="bestTimeBtn">
+                  <i class="bi bi-calendar-event me-2"></i>Best time to visit?
+                </button>
+                <button class="btn btn-outline-primary" id="entryFeesBtn">
+                  <i class="bi bi-cash-coin me-2"></i>Entry fees?
+                </button>
+                <button class="btn btn-outline-primary" id="nearbyAttractionsBtn">
+                  <i class="bi bi-binoculars me-2"></i>Nearby attractions?
+                </button>
+                <button class="btn btn-outline-primary" id="accommodationBtn">
+                  <i class="bi bi-house me-2"></i>Accommodation?
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Chat Area -->
+          <div class="col-lg-9">
+            <div class="chat-container">
+
+      <!-- Page header -->
+      <div class="text-center mb-4">
+        <div class="section-eyebrow">
+          <i class="bi bi-robot me-1"></i>Powered by Cohere AI
+        </div>
+        <h2 class="section-title">Your Tamil Nadu AI Guide</h2>
+        <p class="text-muted">Ask anything about Tamil Nadu destinations, travel tips, or itinerary planning. Use the sidebar for quick questions!</p>
+      </div>
+
+      <!-- Chat window -->
+      <div class="chat-window">
+        <div class="chat-header">
+          <div class="bot-avatar">🤖</div>
+          <div>
+            <h5>TNTripBot</h5>
+          <small>Tamil Nadu Travel Expert · AI Powered</small>
+          </div>
+          <div class="ms-auto d-flex gap-2">
+            <span class="badge bg-success" id="status-dot">● Online</span>
+            <button class="btn btn-sm btn-outline-light" id="clearBtn" title="Clear chat history">
+              <i class="bi bi-trash3"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Messages area -->
+        <div class="chat-messages" id="chatMessages">
+
+          <!-- Welcome message -->
+          <div class="message-row" id="welcomeMsg">
+            <div class="message-avatar"><i class="bi bi-robot"></i></div>
+            <div>
+            <div class="message-bubble ai-bubble">
+              👋 <strong>Welcome to TNTripBot!</strong><br>
+              Your guide to Tamil Nadu. Ask me about:<br>
+              🛕 Temple towns (Madurai, Srirangam) · 🏝️ Rameswaram<br>
+              🏖️ Chennai beaches · 🌄 Ooty / Kodaikanal hills · 🍛 Local eats<br>
+              Use the sidebar to ask quick questions about specific places!
+            </div>
+              <div class="message-time">Just now</div>
+            </div>
+          </div>
+
+          <!-- Previous chat history -->
+          {% for msg in chat_history reversed %}
+          <div class="message-row user-row">
+            <div class="message-avatar"><i class="bi bi-person-fill"></i></div>
+            <div>
+              <div class="message-bubble user-bubble">{{ msg.user_message }}</div>
+              <div class="message-time">{{ msg.created_at|date:"g:i A" }}</div>
+            </div>
+          </div>
+          <div class="message-row">
+            <div class="message-avatar"><i class="bi bi-robot"></i></div>
+            <div>
+              <div class="message-bubble ai-bubble">{{ msg.ai_response }}</div>
+              {% if msg.related_place %}
+              <a href="{{ msg.related_place.get_absolute_url }}" class="place-chip">
+                <i class="bi bi-geo-alt-fill"></i> {{ msg.related_place.name }}
+              </a>
+              {% endif %}
+              <div class="message-time">{{ msg.created_at|date:"g:i A" }}</div>
+            </div>
+          </div>
+          {% endfor %}
+
+          <!-- Typing indicator -->
+          <div class="message-row" id="typingRow" style="display:none;">
+            <div class="message-avatar"><i class="bi bi-robot"></i></div>
+            <div>
+              <div class="typing-indicator visible">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /chat-messages -->
+      </div><!-- /chat-window -->
+
+      <!-- Suggestion chips -->
+      <div class="chat-suggestions" id="suggestions">
+        <button class="suggestion-chip" data-msg="What are the top things to do in Chennai?">🏖️ Chennai highlights</button>
+        <button class="suggestion-chip" data-msg="Tell me about Madurai Meenakshi Temple.">🛕 Madurai Temple</button>
+        <button class="suggestion-chip" data-msg="What's the best food to try in Tamil Nadu?">🍛 Tamil Nadu food</button>
+        <button class="suggestion-chip" data-msg="Plan a 3-day itinerary for Tamil Nadu.">📅 3-day itinerary</button>
+        <button class="suggestion-chip" data-msg="What are family-friendly activities in Ooty?">👨‍👩‍👧 Family fun in Ooty</button>
+      </div>
+
+      <!-- Input bar -->
+      <div class="chat-input-bar">
+        <textarea
+          class="chat-input"
+          id="chatInput"
+          placeholder="Ask about Tamil Nadu destinations, tips, itineraries…"
+          rows="1"
+          maxlength="1000"
+          aria-label="Your message"
+        ></textarea>
+        <button class="btn-send" id="sendBtn" title="Send message" aria-label="Send">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+
+      <!-- Char counter -->
+      <div class="text-end pe-2 pt-1">
+        <small class="text-muted" id="charCounter">0 / 1000</small>
+      </div>
+
+    </div><!-- /chat-container -->
+          </div><!-- /col-lg-9 -->
+        </div><!-- /row g-4 -->
+      </div><!-- /col-xl-10 -->
+    </div><!-- /row justify-content-center -->
+  </div><!-- /container-fluid -->
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const SEND_URL = '{% url "chatbot:send" %}';
+const CLEAR_URL = '{% url "chatbot:clear" %}';
+
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const typingRow = document.getElementById('typingRow');
+const charCounter = document.getElementById('charCounter');
+
+// ── Auto-resize textarea ───────────────────────────────────
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+  charCounter.textContent = `${chatInput.value.length} / 1000`;
+});
+
+// ── Send on Enter (Shift+Enter for newline) ───────────────
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+sendBtn.addEventListener('click', sendMessage);
+
+// ── Suggestion chips ──────────────────────────────────────
+document.querySelectorAll('.suggestion-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    chatInput.value = chip.dataset.msg;
+    chatInput.dispatchEvent(new Event('input'));
+    sendMessage();
+    // Hide suggestions after first use
+    document.getElementById('suggestions').style.display = 'none';
+  });
+});
+
+// ── Sidebar quick questions ───────────────────────────────
+const placeDropdown = document.getElementById('placeDropdown');
+const quickBtns = ['howToReachBtn', 'bestTimeBtn', 'entryFeesBtn', 'nearbyAttractionsBtn', 'accommodationBtn'];
+const quickMsgs = ['How to reach?', 'Best time to visit?', 'Entry fees?', 'Nearby attractions?', 'Accommodation?'];
+
+quickBtns.forEach((btnId, index) => {
+  document.getElementById(btnId).addEventListener('click', () => {
+    const selectedPlace = placeDropdown.value;
+    let message = quickMsgs[index];
+    if (selectedPlace) {
+      message += ` ${selectedPlace}`;
+    }
+    chatInput.value = message;
+    chatInput.dispatchEvent(new Event('input'));
+    sendMessage();
+  });
+});
+
+// ── Clear history ─────────────────────────────────────────
+document.getElementById('clearBtn').addEventListener('click', async () => {
+  if (!confirm('Clear your entire chat history?')) return;
+  try {
+    await fetch(CLEAR_URL, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': CSRF },
+    });
+    // Remove all messages except welcome
+    chatMessages.querySelectorAll('.message-row:not(#welcomeMsg):not(#typingRow)')
+      .forEach(el => el.remove());
+  } catch(e) {
+    console.error('Clear error:', e);
+  }
+});
+
+// ── Core send function ────────────────────────────────────
+async function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text || sendBtn.disabled) return;
+
+  // Append user bubble
+  appendMessage('user', text);
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+  charCounter.textContent = '0 / 1000';
+
+  // Show typing indicator
+  setTyping(true);
+  setDisabled(true);
+
+  try {
+    const res = await fetch(SEND_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': CSRF,
+      },
+      body: JSON.stringify({ message: text }),
+    });
+
+    setTyping(false);
+
+    if (!res.ok) {
+      const err = await res.json();
+      appendAIMessage(`⚠️ ${err.error || 'Something went wrong. Please try again.'}`, null);
+      return;
+    }
+
+    const data = await res.json();
+    appendAIMessage(data.ai_response, data.related_place || null);
+
+  } catch(err) {
+    setTyping(false);
+    appendAIMessage('⚠️ Network error. Please check your connection and try again.', null);
+  } finally {
+    setDisabled(false);
+    chatInput.focus();
+  }
+}
+
+function appendMessage(role, text) {
+  const isUser = role === 'user';
+  const row = document.createElement('div');
+  row.className = `message-row${isUser ? ' user-row' : ''}`;
+
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  row.innerHTML = `
+    <div class="message-avatar">
+      <i class="bi bi-${isUser ? 'person-fill' : 'robot'}"></i>
+    </div>
+    <div>
+      <div class="message-bubble ${isUser ? 'user-bubble' : 'ai-bubble'}">${isUser ? escapeHtml(text) : formatMarkdown(text)}</div>
+      <div class="message-time">${time}</div>
+    </div>
+  `;
+  chatMessages.insertBefore(row, typingRow);
+  scrollToBottom();
+}
+
+function appendAIMessage(text, relatedPlace) {
+  const row = document.createElement('div');
+  row.className = 'message-row';
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  let placeChip = '';
+  if (relatedPlace) {
+    placeChip = `
+      <a href="${relatedPlace.url}" class="place-chip">
+        <i class="bi bi-geo-alt-fill"></i> ${escapeHtml(relatedPlace.name)}
+      </a>
+    `;
+  }
+
+  row.innerHTML = `
+    <div class="message-avatar"><i class="bi bi-robot"></i></div>
+    <div>
+      <div class="message-bubble ai-bubble">${formatMarkdown(text)}</div>
+      ${placeChip}
+      <div class="message-time">${time}</div>
+    </div>
+  `;
+  chatMessages.insertBefore(row, typingRow);
+  scrollToBottom();
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function formatMarkdown(text) {
+  // Simple markdown parser for bold and lists
+  let html = escapeHtml(text);
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  // Numbered lists: assume if starts with 1. and has multiple lines with numbers
+  if (/^\d+\.\s/.test(html)) {
+    html = html.replace(/^(\d+)\.\s+(.*)$/gm, '<li>$2</li>');
+    html = '<ol>' + html + '</ol>';
+  }
+  // Bullet lists
+  else if (/^- /.test(html)) {
+    html = html.replace(/^- (.*)$/gm, '<li>$1</li>');
+    html = '<ul>' + html + '</ul>';
+  }
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+function setTyping(show) {
+  typingRow.style.display = show ? 'flex' : 'none';
+  scrollToBottom();
+}
+
+function setDisabled(disabled) {
+  sendBtn.disabled = disabled;
+}
+
+function scrollToBottom() {
+  requestAnimationFrame(() => {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+}
+
+function enhanceExistingAIMessages() {
+  document.querySelectorAll('.message-row:not(#welcomeMsg) .message-bubble.ai-bubble').forEach(el => {
+    if (!el.children.length) {
+      el.innerHTML = formatMarkdown(el.textContent.trim());
+    }
+  });
+}
+
+// Render existing AI history with markdown formatting and scroll to bottom on load
+enhanceExistingAIMessages();
+scrollToBottom();
+</script>
+{% endblock %}

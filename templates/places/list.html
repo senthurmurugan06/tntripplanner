@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Explore Tamil Nadu{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO + SEARCH ─────────────────────────────────────── -->
+<section class="tn-hero">
+  <div class="container position-relative" style="z-index:2;">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <div class="hero-badge">🌟 Tamil Nadu's #1 Trip Planner</div>
+        <h1>Discover Tamil Nadu's<br><em>Hidden Wonders</em></h1>
+        <p class="hero-sub">From ancient Chola temples to cool Nilgiri hills — your perfect adventure starts here.</p>
+
+        {% if not user.is_authenticated %}
+        <div class="d-flex gap-3 mt-4 flex-wrap">
+          <a href="{% url 'users:register' %}" class="btn btn-accent btn-lg">Start Exploring →</a>
+          <a href="{% url 'chatbot:chat' %}" class="btn btn-outline-light btn-lg">🤖 Ask AI Guide</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="col-lg-7">
+        <div class="search-card">
+          <form method="get" action="{% url 'places:list' %}">
+            <div class="row g-2">
+              <div class="col-12">
+                <div class="input-group">
+                  <span class="input-group-text bg-transparent border-end-0" style="border:1.5px solid var(--tn-border);border-right:none;border-radius:8px 0 0 8px;">
+                    <i class="bi bi-search text-muted"></i>
+                  </span>
+                  {{ form.q }}
+                </div>
+              </div>
+              <div class="col-sm-6">{{ form.category }}</div>
+              <div class="col-sm-6">{{ form.ordering }}</div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-search w-100">
+                  <i class="bi bi-search me-2"></i>Search Places
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── QUICK CATEGORY FILTER ─────────────────────────────── -->
+<section class="py-3 bg-white border-bottom">
+  <div class="container">
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+      <span class="text-muted small fw-500 me-1">Browse:</span>
+      <a href="{% url 'places:list' %}"
+         class="btn btn-sm {% if not current_category %}btn-dark{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        All
+      </a>
+      {% for val, label in categories %}
+      <a href="{% url 'places:list' %}?category={{ val }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}"
+         class="btn btn-sm {% if current_category == val %}btn-dark{% else %}btn-outline-secondary{% endif %} rounded-pill">
+        {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ── RESULTS ───────────────────────────────────────────── -->
+<section class="py-5">
+  <div class="container">
+
+    <!-- Header row -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <div class="section-eyebrow">Tourist Destinations</div>
+        <h2 class="section-title mb-0">
+          {% if current_q %}
+            Results for "<em>{{ current_q }}</em>"
+          {% elif current_category %}
+            {{ current_category|capfirst }} Places
+          {% else %}
+            Explore Tamil Nadu
+          {% endif %}
+        </h2>
+        <p class="text-muted small mt-1">
+          {{ total_count|intcomma }} destination{{ total_count|pluralize }} found
+        </p>
+      </div>
+
+      {% if user.is_authenticated %}
+      <a href="{% url 'chatbot:chat' %}" class="btn btn-outline-success">
+        <i class="bi bi-robot me-2"></i>Ask AI for Suggestions
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Featured strip (only on home/unfiltered) -->
+    {% if featured and not current_q and not current_category %}
+    <div class="mb-5">
+      <div class="section-eyebrow mb-2">⭐ Featured Picks</div>
+      <div class="row g-3">
+        {% for place in featured %}
+        <div class="col-md-4">
+          <div class="place-card position-relative">
+            <div class="featured-strip"><i class="bi bi-star-fill me-1"></i>Featured</div>
+            <div class="card-img-wrap">
+              <img src="{{ place.image_url }}" alt="{{ place.image_alt|default:place.name }}" loading="lazy" />
+              <span class="category-badge">{{ place.get_category_display }}</span>
+            </div>
+            <div class="card-body">
+              <h5 class="card-title">{{ place.name }}</h5>
+              <p class="card-location"><i class="bi bi-geo-alt-fill"></i>{{ place.location }}</p>
+              <p class="card-text">{{ place.short_description|default:place.description }}</p>
+            </div>
+            <div class="card-footer">
+              <div>
+                <span class="rating-stars">
+                  {% for i in place.star_range %}
+                    {% if i <= place.rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
+                  {% endfor %}
+                </span>
+                <span class="ms-1 small text-muted">{{ place.rating }}</span>
+              </div>
+              <a href="{{ place.get_absolute_url }}" class="btn-card-link">View <i class="bi bi-arrow-right"></i></a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      <hr class="divider-fancy" />
+    </div>
+    {% endif %}
+
+    <!-- Main grid -->
+    {% if places %}
+    <div class="row g-4" id="places-grid">
+      {% for place in places %}
+      <div class="col-sm-6 col-lg-4">
+        <div class="place-card position-relative">
+          <div class="card-img-wrap">
+            <img src="{{ place.image_url }}" alt="{{ place.image_alt|default:place.name }}" loading="lazy" />
+            <span class="category-badge">{{ place.get_category_display }}</span>
+
+            {% if user.is_authenticated %}
+            <button class="fav-btn {% if user in place.favorited_by.all %}active{% endif %}"
+                    data-slug="{{ place.slug }}"
+                    data-csrf="{{ csrf_token }}"
+                    title="{% if user in place.favorited_by.all %}Remove from favorites{% else %}Add to favorites{% endif %}">
+              <i class="bi bi-heart{% if user in place.favorited_by.all %}-fill{% endif %}"></i>
+            </button>
+            {% endif %}
+          </div>
+
+          <div class="card-body">
+            <h5 class="card-title">{{ place.name }}</h5>
+            <p class="card-location"><i class="bi bi-geo-alt-fill"></i>{{ place.location }}</p>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span class="rating-stars">
+                {% for i in place.star_range %}
+                  {% if i <= place.rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
+                {% endfor %}
+              </span>
+              <span class="small text-muted">{{ place.rating }} ({{ place.rating_count|intcomma }})</span>
+            </div>
+            <p class="card-text">{{ place.short_description|default:place.description }}</p>
+          </div>
+
+          <div class="card-footer">
+            <span class="small {% if place.is_free %}text-success{% else %}text-muted{% endif %}">
+              <i class="bi bi-{% if place.is_free %}check-circle{% else %}currency-dollar{% endif %} me-1"></i>
+              {% if place.is_free %}Free Entry{% else %}${{ place.entry_fee }}{% endif %}
+            </span>
+            <a href="{{ place.get_absolute_url }}" class="btn-card-link">
+              Explore <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <nav class="mt-5 d-flex justify-content-center" aria-label="Places pagination">
+      <ul class="pagination tn-pagination gap-1">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ num }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">{{ num }}</a>
+            </li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_q %}&q={{ current_q }}{% endif %}{% if current_category %}&category={{ current_category }}{% endif %}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <span class="empty-icon">🗺️</span>
+      <h4>No places found</h4>
+      <p>Try a different search term or category.</p>
+      <a href="{% url 'places:list' %}" class="btn btn-outline-secondary">Clear filters</a>
+    </div>
+    {% endif %}
+
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Favorite toggle via Fetch API
+document.querySelectorAll('.fav-btn').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const slug = btn.dataset.slug;
+    const csrf = btn.dataset.csrf;
+
+    try {
+      const res = await fetch(`/places/${slug}/favorite/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrf,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error('Not logged in');
+      const data = await res.json();
+      const icon = btn.querySelector('i');
+      if (data.added) {
+        icon.className = 'bi bi-heart-fill';
+        btn.classList.add('active');
+        btn.title = 'Remove from favorites';
+      } else {
+        icon.className = 'bi bi-heart';
+        btn.classList.remove('active');
+        btn.title = 'Add to favorites';
+      }
+    } catch {
+      window.location.href = '/users/login/';
+    }
+  });
+});
+</script>
+{% endblock %}
