@@ -1,0 +1,12 @@
+{
+  "buildCommand": "pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput",
+  "outputDirectory": "staticfiles",
+  "env": {
+    "PYTHONUNBUFFERED": "1"
+  },
+  "functions": {
+    "TNTripPlanner/wsgi.py": {
+      "maxDuration": 30
+    }
+  }
+}

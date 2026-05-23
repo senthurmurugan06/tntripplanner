@@ -95,7 +95,13 @@ TEMPLATES = [
 WSGI_APPLICATION = "TNTripPlanner.wsgi.application"
 
 # ─── DATABASE ─────────────────────────────────────────────────────────────────
-_db_engine = _config("DB_ENGINE", default="django.db.backends.sqlite3")
+# On Vercel, use PostgreSQL. Locally, SQLite is fine.
+# WARNING: SQLite doesn't work on Vercel (read-only filesystem)
+_is_production = DEBUG is False or os.environ.get("VERCEL") == "1"
+_db_engine = _config(
+    "DB_ENGINE", 
+    default="django.db.backends.postgresql" if _is_production else "django.db.backends.sqlite3"
+)
 
 if _db_engine == "django.db.backends.postgresql":
     DATABASES = {
@@ -113,6 +119,7 @@ if _db_engine == "django.db.backends.postgresql":
         }
     }
 else:
+    # SQLite - Local development only
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",

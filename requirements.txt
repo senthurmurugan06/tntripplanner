@@ -19,7 +19,8 @@ gunicorn>=22.0.0
 
 # ─── Static files (production) ────────────────────────────
 whitenoise>=6.7.0
-
+# ─── Vercel runtime ───────────────────────────────────
+vercel>=0.0.1
 # ─── Dev/test only ────────────────────────────────────────
 # coverage>=7.5.0
 # factory-boy>=3.3.0
