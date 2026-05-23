@@ -136,7 +136,7 @@ python manage.py runserver
 |---|---|---|
 | `SECRET_KEY` | (insecure dev key) | Django secret key — **change in production** |
 | `DEBUG` | `True` | Set `False` in production |
-| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated allowed hosts |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated allowed hosts; include your Vercel domain in production |
 | `DB_ENGINE` | SQLite | `django.db.backends.postgresql` for Postgres |
 | `DB_NAME` | `tntripplanner` | PostgreSQL database name |
 | `DB_USER` | `postgres` | PostgreSQL user |
@@ -173,7 +173,7 @@ coverage html   # view in browser: htmlcov/index.html
 ```bash
 DEBUG=False
 SECRET_KEY=<strong-random-key>
-ALLOWED_HOSTS=yourdomain.com
+ALLOWED_HOSTS=localhost,127.0.0.1,tntripplanner.vercel.app
 DB_ENGINE=django.db.backends.postgresql
 # ... other DB vars
 ```

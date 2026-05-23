@@ -24,7 +24,17 @@ except ImportError:
 # ─── SECURITY ─────────────────────────────────────────────────────────────────
 SECRET_KEY = _config("SECRET_KEY", default="django-insecure-change-me-in-production-please")
 DEBUG = _config("DEBUG", default=True, cast=bool)
-ALLOWED_HOSTS = _config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=lambda v: [h.strip() for h in v.split(",")])
+
+def _comma_split(value):
+    return [host.strip() for host in value.split(",") if host.strip()]
+
+_vercel_url = os.environ.get("VERCEL_URL", "")
+_vercel_hosts = [".vercel.app"] if _vercel_url else []
+ALLOWED_HOSTS = _config(
+    "ALLOWED_HOSTS",
+    default="localhost,127.0.0.1" + ("," + ",".join(_vercel_hosts) if _vercel_hosts else ""),
+    cast=_comma_split,
+)
 
 # ─── APPLICATIONS ─────────────────────────────────────────────────────────────
 DJANGO_APPS = [
