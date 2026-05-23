@@ -28,11 +28,17 @@ DEBUG = _config("DEBUG", default=True, cast=bool)
 def _comma_split(value):
     return [host.strip() for host in value.split(",") if host.strip()]
 
-_vercel_url = os.environ.get("VERCEL_URL", "")
-_vercel_hosts = [".vercel.app"] if _vercel_url else []
+# Build ALLOWED_HOSTS to include localhost, custom domain, and Vercel
+_allowed_hosts = ["localhost", "127.0.0.1", "tntripplanner.vercel.app", ".vercel.app"]
+
+# Add any custom domain from environment
+_custom_domain = os.environ.get("CUSTOM_DOMAIN", "")
+if _custom_domain:
+    _allowed_hosts.append(_custom_domain)
+
 ALLOWED_HOSTS = _config(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1" + ("," + ",".join(_vercel_hosts) if _vercel_hosts else ""),
+    default=",".join(_allowed_hosts),
     cast=_comma_split,
 )
 
