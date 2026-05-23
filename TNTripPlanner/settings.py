@@ -1,4 +1,4 @@
-"""
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())""""
 TNTripPlanner - Production-grade Django settings.
 Environment-based configuration with secure defaults.
 """
@@ -97,11 +97,16 @@ WSGI_APPLICATION = "TNTripPlanner.wsgi.application"
 # ─── DATABASE ─────────────────────────────────────────────────────────────────
 # On Vercel, use PostgreSQL. Locally, SQLite is fine.
 # WARNING: SQLite doesn't work on Vercel (read-only filesystem)
-_is_production = DEBUG is False or os.environ.get("VERCEL") == "1"
-_db_engine = _config(
-    "DB_ENGINE", 
-    default="django.db.backends.postgresql" if _is_production else "django.db.backends.sqlite3"
-)
+
+# Check if we're on Vercel or if PostgreSQL env vars are set
+_is_vercel = os.environ.get("VERCEL") == "1"
+_has_postgres_config = os.environ.get("DB_HOST") is not None
+
+# Determine database engine - PostgreSQL on production/Vercel, SQLite locally
+if _is_vercel or _has_postgres_config:
+    _db_engine = "django.db.backends.postgresql"
+else:
+    _db_engine = _config("DB_ENGINE", default="django.db.backends.sqlite3")
 
 if _db_engine == "django.db.backends.postgresql":
     DATABASES = {
